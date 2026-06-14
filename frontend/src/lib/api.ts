@@ -1,5 +1,6 @@
-const _host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-const API_BASE_URL = `http://${_host}:5000/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : 'http://localhost:5000/api';
 
 /**
  * Ensures that there is an active authenticated session.
