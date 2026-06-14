@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AmbientBackdrop } from "@/components/AmbientBackdrop";
 import { Logo } from "@/components/Logo";
 import { Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { BACKEND_BASE_URL } from "@/lib/backendUrl";
 
 export const Route = createFileRoute("/gate/$shortCode")({
   head: () => ({ meta: [{ title: "Password Protected Link — NexLink" }] }),
@@ -19,8 +20,7 @@ function GatePage() {
 
   const verifyMutation = useMutation({
     mutationFn: async (pass: string) => {
-      const _host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-      const res = await fetch(`http://${_host}:5000/api/urls/${shortCode}/verify-password`, {
+      const res = await fetch(`${BACKEND_BASE_URL}/api/urls/${shortCode}/verify-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: pass }),

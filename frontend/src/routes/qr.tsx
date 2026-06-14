@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Download, Share2, Printer, Palette, QrCode as QrIcon, Check, Copy, History } from "lucide-react";
+import { BACKEND_BASE_URL } from "@/lib/backendUrl";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createUrl, getUrls, UrlItem } from "@/lib/api";
@@ -42,12 +43,9 @@ function QRPage() {
   }, [search.url, search.code]);
 
   // Compute final QR target link.
-  // Use window.location.hostname so QR codes work when scanned from a phone
-  // on the same network (e.g. frontend opened via 10.x.x.x:8080 → QR points
-  // to 10.x.x.x:5000/r/... instead of localhost:5000 which phones can't reach).
-  const backendHost = typeof window !== "undefined" ? window.location.hostname : "localhost";
+  // Uses VITE_API_URL in production (Vercel), falls back to localhost:5000 in dev.
   const qrTargetLink = shortCode 
-    ? `http://${backendHost}:5000/r/${shortCode}?ref=qr` 
+    ? `${BACKEND_BASE_URL}/r/${shortCode}?ref=qr` 
     : `${destinationUrl}?ref=qr`;
 
   // Query saved QR codes (any link with tag 'qr')

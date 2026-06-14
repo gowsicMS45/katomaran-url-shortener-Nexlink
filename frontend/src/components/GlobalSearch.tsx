@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/command";
 import { Link2, Bookmark, Tag, Star, Copy, QrCode, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { BACKEND_BASE_URL } from "@/lib/backendUrl";
 
 export function GlobalSearch() {
   const router = useRouter();
@@ -66,8 +67,7 @@ export function GlobalSearch() {
 
   const copyLink = (e: React.MouseEvent, shortCode: string) => {
     e.stopPropagation();
-    const _host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-    const text = `http://${_host}:5000/r/${shortCode}`;
+    const text = `${BACKEND_BASE_URL}/r/${shortCode}`;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text);

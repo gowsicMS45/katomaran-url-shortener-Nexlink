@@ -6,6 +6,7 @@ import { getUrls, createUrl, updateUrl, deleteUrl, toggleFavorite, UrlItem, bulk
 import { toast } from "sonner";
 import { Copy, MoreHorizontal, Plus, Search, Star, QrCode, Trash2, Edit, X, Calendar, Lock, CheckCircle, Archive, FolderOpen, Upload, Download, FileSpreadsheet, AlertCircle, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BACKEND_BASE_URL } from "@/lib/backendUrl";
 
 export const Route = createFileRoute("/links")({
   beforeLoad: () => {
@@ -354,8 +355,7 @@ function LinksPage() {
                 return;
               }
               const filename = filter === 'favorites' ? 'bookmarks.csv' : q.includes('qr') ? 'qr-export.csv' : 'links.csv';
-              const _host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-              const exportUrl = `http://${_host}:5000/api/urls/export?filter=${filter}&q=${encodeURIComponent(q)}&filename=${filename}`;
+              const exportUrl = `${BACKEND_BASE_URL}/api/urls/export?filter=${filter}&q=${encodeURIComponent(q)}&filename=${filename}`;
               downloadFile(exportUrl, filename);
             }}
             className="rounded-lg glass px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition apple-spring cursor-pointer"
@@ -401,8 +401,7 @@ function LinksPage() {
           </thead>
           <tbody>
             {urls.map((l) => {
-              const _host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-              const shortUrl = `http://${_host}:5000/r/${l.shortCode}`;
+              const shortUrl = `${BACKEND_BASE_URL}/r/${l.shortCode}`;
               const isExpired = l.expiresAt && new Date(l.expiresAt) <= new Date();
               const isOverLimit = l.clickLimit !== null && l.clickCount >= l.clickLimit;
               const active = !isExpired && !isOverLimit;
@@ -484,8 +483,7 @@ function LinksPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           const filename = "analytics-report.csv";
-                          const _host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-                          const exportUrl = `http://${_host}:5000/api/analytics/url/${l._id}/export?format=csv&filename=${filename}`;
+                          const exportUrl = `${BACKEND_BASE_URL}/api/analytics/url/${l._id}/export?format=csv&filename=${filename}`;
                           downloadFile(exportUrl, filename);
                         }}
                         className="p-1 rounded hover:bg-accent hover:text-foreground text-muted-foreground"
@@ -801,7 +799,7 @@ function LinksPage() {
                         <div className="min-w-0 flex-1">
                           <span className="font-semibold block truncate text-[11px] text-muted-foreground">{res.originalUrl}</span>
                           {res.success ? (
-                            <span className="font-mono text-neon text-[11px]">{`http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:5000/r/${res.url?.shortCode}`}</span>
+                            <span className="font-mono text-neon text-[11px]">{`${BACKEND_BASE_URL}/r/${res.url?.shortCode}`}</span>
                           ) : (
                             <span className="text-[11px] block text-destructive/80">{res.error}</span>
                           )}

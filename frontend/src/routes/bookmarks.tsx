@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUrls, toggleFavorite, UrlItem } from "@/lib/api";
 import { useState } from "react";
 import { toast } from "sonner";
+import { BACKEND_BASE_URL } from "@/lib/backendUrl";
 
 export const Route = createFileRoute("/bookmarks")({
   beforeLoad: () => {
@@ -53,8 +54,7 @@ function Bookmarks() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {favorites.map((l) => {
-            const _host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-            const shortUrl = `http://${_host}:5000/r/${l.shortCode}`;
+            const shortUrl = `${BACKEND_BASE_URL}/r/${l.shortCode}`;
             return (
               <div
                 key={l._id}
