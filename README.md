@@ -214,16 +214,8 @@ npm run dev            # starts on http://localhost:5173
 3. Integrate a real GeoIP database (e.g. `geoip-lite` or MaxMind).
 4. Replace the in-memory rate limiter with a Redis-backed store for horizontal scaling.
 5. Enforce email verification before allowing link creation.
-
----
-
-## 🎬 Demo Video
-
-| | |
-|---|---|
-| **YouTube** | *(add link here)* |
-| **Loom** | *(add link here)* |
-
----
+   ----
+DEPLOYED LINK 
+https://nexlink-frontend.vercel.app/bookmarks
 
 This project is a part of a hackathon run by https://katomaran.com
