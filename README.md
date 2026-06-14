@@ -216,6 +216,6 @@ npm run dev            # starts on http://localhost:5173
 5. Enforce email verification before allowing link creation.
    ----
 DEPLOYED LINK 
-https://nexlink-frontend.vercel.app/bookmarks
+https://nexlink-frontend.vercel.app/
 
 This project is a part of a hackathon run by https://katomaran.com
