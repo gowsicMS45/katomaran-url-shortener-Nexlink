@@ -335,7 +335,8 @@ const getWorkspaceAnalytics = async (req, res, next) => {
     // 3. Devices breakdown
     const devicesMap = { Desktop: 0, Mobile: 0, Tablet: 0 };
     visits.forEach(v => {
-      const d = v.device || 'Desktop';
+      let d = (v.device && v.device !== 'Unknown') ? v.device : parseUserAgent(v.userAgent).device;
+      if (!['Desktop', 'Mobile', 'Tablet'].includes(d)) d = 'Desktop';
       devicesMap[d] = (devicesMap[d] || 0) + 1;
     });
     const devicesData = Object.keys(devicesMap).map(k => ({ name: k, value: devicesMap[k] }));
@@ -343,7 +344,8 @@ const getWorkspaceAnalytics = async (req, res, next) => {
     // 4. Browsers breakdown
     const browsersMap = { Chrome: 0, Safari: 0, Edge: 0, Firefox: 0, Other: 0 };
     visits.forEach(v => {
-      const b = v.browser || 'Other';
+      let b = (v.browser && v.browser !== 'Unknown') ? v.browser : parseUserAgent(v.userAgent).browser;
+      if (!['Chrome', 'Safari', 'Edge', 'Firefox'].includes(b)) b = 'Other';
       browsersMap[b] = (browsersMap[b] || 0) + 1;
     });
     const browsersData = Object.keys(browsersMap).map(k => ({ name: k, value: browsersMap[k] }));
