@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { AmbientBackdrop } from "@/components/AmbientBackdrop";
 import { Logo } from "@/components/Logo";
-import { ShieldAlert, ArrowRight, RefreshCw } from "lucide-react";
+import { ShieldAlert, ArrowRight, RefreshCw, Mail, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/verify-email")({
   beforeLoad: () => {
@@ -26,9 +26,8 @@ function VerifyEmail() {
 
   const verifyMutation = useMutation({
     mutationFn: verifyEmail,
-    onSuccess: (data) => {
-      toast.success("Email verified successfully! Opening console...");
-      // Invalidate currentUser query to update layout verification status
+    onSuccess: () => {
+      toast.success("Email verified successfully!");
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       router.navigate({ to: "/dashboard" });
     },
@@ -40,11 +39,11 @@ function VerifyEmail() {
   const resendMutation = useMutation({
     mutationFn: resendVerification,
     onSuccess: () => {
-      toast.success("Verification code resent to your email.");
-      toast.info("In development, check the backend console terminal logs to see the code!");
+      toast.success("Verification code sent!");
+      toast.info("Check your inbox and spam/junk folder.", { duration: 6000 });
     },
     onError: (err: any) => {
-      toast.error(err.message || "Failed to resend code.");
+      toast.error(err.message || "Failed to resend code. Try again shortly.");
     },
   });
 
@@ -72,9 +71,20 @@ function VerifyEmail() {
         className="w-full max-w-md rounded-2xl liquid-glass p-8 relative z-10"
       >
         <div className="text-center mb-6">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/20 mb-4">
+            <Mail className="h-7 w-7 text-primary" />
+          </div>
           <h2 className="text-2xl font-bold tracking-tight text-gradient">Verify your email</h2>
           <p className="text-xs text-muted-foreground mt-1.5">
-            We sent a 6-digit verification code to your email. Enter it below to unlock full console capabilities.
+            We sent a 6-digit code to your email address. Enter it below.
+          </p>
+        </div>
+
+        {/* Spam notice */}
+        <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 mb-4">
+          <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-200/80">
+            Can't find the email? Check your <strong>spam / junk folder</strong>. The code expires in 24 hours.
           </p>
         </div>
 
@@ -88,7 +98,7 @@ function VerifyEmail() {
                 required
                 maxLength={6}
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 placeholder="123456"
                 className="w-full bg-background/50 border border-border/70 rounded-lg pl-9 pr-3 py-2.5 text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary/60 transition focus-liquid"
               />
@@ -97,7 +107,7 @@ function VerifyEmail() {
 
           <button
             type="submit"
-            disabled={verifyMutation.isPending}
+            disabled={verifyMutation.isPending || code.length !== 6}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-neon px-4 py-2.5 text-sm font-medium text-primary-foreground glow-primary transition hover:opacity-90 disabled:opacity-50 cursor-pointer magnetic-btn active:magnetic-btn-active"
           >
             {verifyMutation.isPending ? "Verifying..." : "Verify Code"}

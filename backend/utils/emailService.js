@@ -1,63 +1,60 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Sends an email using SMTP if configured in .env, otherwise logs the email content to console.
- * 
- * Configurable Environment Variables:
- * - SMTP_HOST: The hostname of the SMTP server (e.g. smtp.gmail.com or smtp.sendgrid.net)
- * - SMTP_PORT: The port number (usually 587 or 465)
- * - SMTP_USER: Username/email address for authentication
- * - SMTP_PASS: Password or app-specific password
- * - EMAIL_FROM: The sender email address (e.g. "NexLink <noreply@nexlink.io>")
+ * Returns true when all required SMTP env vars are present.
+ */
+function isSmtpConfigured() {
+  return !!(
+    process.env.SMTP_HOST &&
+    process.env.SMTP_PORT &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS
+  );
+}
+
+/**
+ * Sends an email via SMTP (production) or logs to console (development fallback).
+ *
+ * Environment variables required for real email delivery:
+ *   SMTP_HOST  – e.g. smtp.gmail.com
+ *   SMTP_PORT  – e.g. 587
+ *   SMTP_USER  – Gmail address / SendGrid login
+ *   SMTP_PASS  – App-specific password or API key
+ *   EMAIL_FROM – Display name + address, e.g. "NexLink <noreply@nexlink.io>"
  */
 async function sendEmail({ to, subject, text, html }) {
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.EMAIL_FROM || 'NexLink <noreply@nexlink.io>';
+  const from = process.env.EMAIL_FROM || '"NexLink" <noreply@nexlink.io>';
 
-  // Check if SMTP is configured
-  if (host && port && user && pass) {
+  if (isSmtpConfigured()) {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT, 10),
+      secure: parseInt(process.env.SMTP_PORT, 10) === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
     try {
-      console.log(`[EMAIL SERVICE] Sending real email to ${to} using SMTP...`);
-      
-      const transporter = nodemailer.createTransport({
-        host,
-        port: parseInt(port, 10),
-        secure: parseInt(port, 10) === 465, // true for 465, false for other ports
-        auth: {
-          user,
-          pass,
-        },
-      });
-
-      const info = await transporter.sendMail({
-        from,
-        to,
-        subject,
-        text,
-        html,
-      });
-
-      console.log(`[EMAIL SERVICE] Real email sent successfully! Message ID: ${info.messageId}`);
+      const info = await transporter.sendMail({ from, to, subject, text, html });
+      console.log(`[EMAIL SERVICE] ✅ Sent to ${to} — Message-ID: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
-    } catch (error) {
-      console.error(`[EMAIL SERVICE ERROR] Failed to send real email via SMTP: ${error.message}`);
-      console.log(`[EMAIL SERVICE FALLBACK] Falling back to console simulation.`);
+    } catch (err) {
+      console.error(`[EMAIL SERVICE] ❌ SMTP error: ${err.message}`);
+      // Re-throw so callers can surface a proper error to the user
+      throw new Error(`Failed to send email: ${err.message}`);
     }
   }
 
-  // Fallback / Simulation Log (default development behavior)
-  console.log('\n=== SIMULATED EMAIL OUTBOX ======================');
-  console.log(`To:      ${to}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Text:    ${text}`);
-  console.log('==================================================\n');
-  
+  // ── Development / no-SMTP fallback ──────────────────────────────────────────
+  console.log('\n╔══════════════ SIMULATED EMAIL ════════════════╗');
+  console.log(`║  To:      ${to}`);
+  console.log(`║  Subject: ${subject}`);
+  console.log(`║  Body:    ${text}`);
+  console.log('╚═══════════════════════════════════════════════╝\n');
+
   return { success: true, simulated: true };
 }
 
-module.exports = {
-  sendEmail,
-};
+module.exports = { sendEmail, isSmtpConfigured };

@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
+const { sendEmail, isSmtpConfigured } = require('../utils/emailService');
 
 // Helper function to generate JWT
 const generateToken = (userId) => {
@@ -55,18 +56,36 @@ const signup = async (req, res, next) => {
 
     console.log(`[VERIFICATION CODE LOG] Email: ${email} | Code: ${verificationCode}`);
 
-    // Send verification email using the emailService (supports real SMTP or console fallback)
-    const { sendEmail } = require('../utils/emailService');
-    sendEmail({
-      to: email,
-      subject: 'Verify your NexLink Email Address',
-      text: `Hello ${name},\n\nYour 6-digit verification code is: ${verificationCode}\n\nPlease enter this code in the console to verify your account.\n\nThank you,\nThe NexLink Team`,
-      html: `<p>Hello <strong>${name}</strong>,</p><p>Your 6-digit verification code is: <strong style="font-size: 18px; color: #7c3aed;">${verificationCode}</strong></p><p>Please enter this code in the console to verify your account.</p><p>Thank you,<br/>The NexLink Team</p>`
-    }).catch(err => console.error(`[EMAIL ERROR] Failed to send email: ${err.message}`));
+    // Send verification email — await so SMTP errors surface properly
+    let emailWarning = null;
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Verify your NexLink email address',
+        text: `Hello ${name},\n\nWelcome to NexLink! Your 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page to activate your account.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
+        html: `
+<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
+  <h2 style="color:#a78bfa;margin-bottom:8px;">Verify your email</h2>
+  <p>Hello <strong>${name}</strong>,</p>
+  <p>Welcome to NexLink! Use the code below to verify your email address:</p>
+  <div style="text-align:center;margin:28px 0;">
+    <span style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#7c3aed;background:#1e1b4b;padding:12px 24px;border-radius:8px;">${verificationCode}</span>
+  </div>
+  <p style="color:#94a3b8;font-size:13px;">Enter this code on the verification page. It expires in <strong>24 hours</strong>.</p>
+  <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't create a NexLink account, you can safely ignore this email.</p>
+</div>`
+      });
+    } catch (emailErr) {
+      console.error(`[EMAIL ERROR] ${emailErr.message}`);
+      if (isSmtpConfigured()) {
+        emailWarning = 'Account created but verification email could not be sent. Please use Resend Code on the verification page.';
+      }
+    }
 
     if (user) {
       res.status(201).json({
         success: true,
+        emailWarning,
         user: {
           _id: user._id,
           name: user.name,
@@ -257,14 +276,28 @@ const forgotPassword = async (req, res, next) => {
     await user.save();
     console.log(`[PASSWORD RESET LOG] Email: ${email} | Code: ${resetCode}`);
 
-    // Send password reset email using the emailService (supports real SMTP or console fallback)
-    const { sendEmail } = require('../utils/emailService');
-    sendEmail({
-      to: email,
-      subject: 'Reset your NexLink Password',
-      text: `Hello ${user.name},\n\nYour 6-digit password reset code is: ${resetCode}\n\nPlease enter this code to reset your password. This code will expire in 15 minutes.\n\nThank you,\nThe NexLink Team`,
-      html: `<p>Hello <strong>${user.name}</strong>,</p><p>Your 6-digit password reset code is: <strong style="font-size: 18px; color: #7c3aed;">${resetCode}</strong></p><p>Please enter this code to reset your password. This code will expire in 15 minutes.</p><p>Thank you,<br/>The NexLink Team</p>`
-    }).catch(err => console.error(`[EMAIL ERROR] Failed to send email: ${err.message}`));
+    // Send password reset email
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Reset your NexLink password',
+        text: `Hello ${user.name},\n\nYour 6-digit password reset code is:\n\n${resetCode}\n\nThis code expires in 15 minutes. If you did not request a reset, ignore this email.\n\nThanks,\nThe NexLink Team`,
+        html: `
+<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
+  <h2 style="color:#a78bfa;margin-bottom:8px;">Password reset</h2>
+  <p>Hello <strong>${user.name}</strong>,</p>
+  <p>Use the code below to reset your NexLink password:</p>
+  <div style="text-align:center;margin:28px 0;">
+    <span style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#7c3aed;background:#1e1b4b;padding:12px 24px;border-radius:8px;">${resetCode}</span>
+  </div>
+  <p style="color:#94a3b8;font-size:13px;">This code expires in <strong>15 minutes</strong>.</p>
+  <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't request a password reset, ignore this email — your password won't change.</p>
+</div>`
+      });
+    } catch (emailErr) {
+      console.error(`[PASSWORD RESET EMAIL ERROR] ${emailErr.message}`);
+      // Still return success to prevent user enumeration, but log failure
+    }
 
     res.status(200).json(successResponse);
   } catch (error) {
@@ -411,18 +444,33 @@ const resendVerification = async (req, res, next) => {
     await user.save();
     console.log(`[VERIFICATION CODE RESEND LOG] Email: ${user.email} | Code: ${verificationCode}`);
 
-    // Send verification email using the emailService (supports real SMTP or console fallback)
-    const { sendEmail } = require('../utils/emailService');
-    sendEmail({
-      to: user.email,
-      subject: 'Verify your NexLink Email Address',
-      text: `Hello ${user.name},\n\nYour new 6-digit verification code is: ${verificationCode}\n\nPlease enter this code to verify your account.\n\nThank you,\nThe NexLink Team`,
-      html: `<p>Hello <strong>${user.name}</strong>,</p><p>Your new 6-digit verification code is: <strong style="font-size: 18px; color: #7c3aed;">${verificationCode}</strong></p><p>Please enter this code to verify your account.</p><p>Thank you,<br/>The NexLink Team</p>`
-    }).catch(err => console.error(`[EMAIL ERROR] Failed to send email: ${err.message}`));
+    // Await send so failures surface as API error
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Your new NexLink verification code',
+        text: `Hello ${user.name},\n\nYour new 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
+        html: `
+<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
+  <h2 style="color:#a78bfa;margin-bottom:8px;">New verification code</h2>
+  <p>Hello <strong>${user.name}</strong>,</p>
+  <p>Here is your new NexLink email verification code:</p>
+  <div style="text-align:center;margin:28px 0;">
+    <span style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#7c3aed;background:#1e1b4b;padding:12px 24px;border-radius:8px;">${verificationCode}</span>
+  </div>
+  <p style="color:#94a3b8;font-size:13px;">Enter this code on the verification page. It expires in <strong>24 hours</strong>.</p>
+  <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't request this, you can safely ignore this email.</p>
+</div>`
+      });
+    } catch (emailErr) {
+      console.error(`[EMAIL RESEND ERROR] ${emailErr.message}`);
+      res.status(500);
+      throw new Error('Could not send verification email. Please check your inbox or try again shortly.');
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Verification code resent successfully',
+      message: 'Verification code sent! Please check your inbox (and spam folder).',
     });
   } catch (error) {
     next(error);
