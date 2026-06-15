@@ -56,14 +56,13 @@ const signup = async (req, res, next) => {
 
     console.log(`[VERIFICATION CODE LOG] Email: ${email} | Code: ${verificationCode}`);
 
-    // Send verification email — await so SMTP errors surface properly
-    let emailWarning = null;
-    try {
-      await sendEmail({
-        to: email,
-        subject: 'Verify your NexLink email address',
-        text: `Hello ${name},\n\nWelcome to NexLink! Your 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page to activate your account.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
-        html: `
+    // Send verification email — fire-and-forget so signup NEVER blocks/hangs
+    // Email failure must not prevent account creation
+    sendEmail({
+      to: email,
+      subject: 'Verify your NexLink email address',
+      text: `Hello ${name},\n\nWelcome to NexLink! Your 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page to activate your account.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
+      html: `
 <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
   <h2 style="color:#a78bfa;margin-bottom:8px;">Verify your email</h2>
   <p>Hello <strong>${name}</strong>,</p>
@@ -74,29 +73,17 @@ const signup = async (req, res, next) => {
   <p style="color:#94a3b8;font-size:13px;">Enter this code on the verification page. It expires in <strong>24 hours</strong>.</p>
   <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't create a NexLink account, you can safely ignore this email.</p>
 </div>`
-      });
-    } catch (emailErr) {
-      console.error(`[EMAIL ERROR] ${emailErr.message}`);
-      if (isSmtpConfigured()) {
-        emailWarning = 'Account created but verification email could not be sent. Please use Resend Code on the verification page.';
-      }
-    }
+    }).catch(err => console.error(`[EMAIL ERROR] ${err.message}`));
 
-    if (user) {
-      res.status(201).json({
-        success: true,
-        emailWarning,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-        },
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(400);
-      throw new Error('Invalid user data');
-    }
+    res.status(201).json({
+      success: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      token: generateToken(user._id),
+    });
   } catch (error) {
     next(error);
   }
