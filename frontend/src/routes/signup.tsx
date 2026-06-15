@@ -30,8 +30,12 @@ function Signup() {
     mutationFn: signupUser,
     onSuccess: (data) => {
       localStorage.setItem("token", data.token);
+      // If SMTP is not configured on the server, backend returns the code directly
+      if (data.devCode) {
+        sessionStorage.setItem("devVerifyCode", data.devCode);
+      }
       toast.success("Account created successfully! Welcome to NexLink.");
-      router.navigate({ to: "/dashboard" });
+      router.navigate({ to: "/verify-email" });
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to create account. Email may be in use.");

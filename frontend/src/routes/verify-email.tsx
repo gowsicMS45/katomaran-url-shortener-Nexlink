@@ -1,12 +1,12 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { verifyEmail, resendVerification } from "@/lib/api";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { AmbientBackdrop } from "@/components/AmbientBackdrop";
 import { Logo } from "@/components/Logo";
-import { ShieldAlert, ArrowRight, RefreshCw, Mail, AlertTriangle } from "lucide-react";
+import { ShieldAlert, ArrowRight, RefreshCw, Mail, AlertTriangle, Terminal } from "lucide-react";
 
 export const Route = createFileRoute("/verify-email")({
   beforeLoad: () => {
@@ -23,10 +23,21 @@ function VerifyEmail() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
+  const [devCode, setDevCode] = useState<string | null>(null);
+
+  // Read devCode stored by signup when SMTP is not configured
+  useEffect(() => {
+    const stored = sessionStorage.getItem("devVerifyCode");
+    if (stored) {
+      setDevCode(stored);
+      setCode(stored); // auto-fill
+    }
+  }, []);
 
   const verifyMutation = useMutation({
     mutationFn: verifyEmail,
     onSuccess: () => {
+      sessionStorage.removeItem("devVerifyCode");
       toast.success("Email verified successfully!");
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       router.navigate({ to: "/dashboard" });
@@ -38,9 +49,17 @@ function VerifyEmail() {
 
   const resendMutation = useMutation({
     mutationFn: resendVerification,
-    onSuccess: () => {
-      toast.success("Verification code sent!");
-      toast.info("Check your inbox and spam/junk folder.", { duration: 6000 });
+    onSuccess: (data: any) => {
+      if (data.devCode) {
+        // No SMTP — show code directly
+        setDevCode(data.devCode);
+        setCode(data.devCode);
+        sessionStorage.setItem("devVerifyCode", data.devCode);
+        toast.success("New code generated — see it below!");
+      } else {
+        toast.success("Verification code sent!");
+        toast.info("Check your inbox and spam/junk folder.", { duration: 6000 });
+      }
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to resend code. Try again shortly.");
@@ -80,13 +99,24 @@ function VerifyEmail() {
           </p>
         </div>
 
-        {/* Spam notice */}
-        <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 mb-4">
-          <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-200/80">
-            Can't find the email? Check your <strong>spam / junk folder</strong>. The code expires in 24 hours.
-          </p>
-        </div>
+        {/* Dev mode — show code directly when SMTP not configured */}
+        {devCode ? (
+          <div className="flex items-start gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3 mb-4">
+            <Terminal className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-200/90">
+              <p className="font-semibold mb-1">Email not configured — code shown here:</p>
+              <p className="font-mono text-2xl font-bold tracking-widest text-emerald-300">{devCode}</p>
+              <p className="text-[10px] text-emerald-400/70 mt-1">Auto-filled below. Just click Verify Code.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 mb-4">
+            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-200/80">
+              Can't find the email? Check your <strong>spam / junk folder</strong>. Or click <strong>Resend</strong> below.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

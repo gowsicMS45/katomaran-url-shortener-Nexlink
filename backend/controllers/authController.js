@@ -77,6 +77,8 @@ const signup = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
+      // When SMTP is not configured, return code so frontend can show it directly
+      devCode: !isSmtpConfigured() ? verificationCode : undefined,
       user: {
         _id: user._id,
         name: user.name,
@@ -431,13 +433,12 @@ const resendVerification = async (req, res, next) => {
     await user.save();
     console.log(`[VERIFICATION CODE RESEND LOG] Email: ${user.email} | Code: ${verificationCode}`);
 
-    // Await send so failures surface as API error
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: 'Your new NexLink verification code',
-        text: `Hello ${user.name},\n\nYour new 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
-        html: `
+    // Fire-and-forget — never block the response waiting for email
+    sendEmail({
+      to: user.email,
+      subject: 'Your new NexLink verification code',
+      text: `Hello ${user.name},\n\nYour new 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
+      html: `
 <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
   <h2 style="color:#a78bfa;margin-bottom:8px;">New verification code</h2>
   <p>Hello <strong>${user.name}</strong>,</p>
@@ -448,16 +449,13 @@ const resendVerification = async (req, res, next) => {
   <p style="color:#94a3b8;font-size:13px;">Enter this code on the verification page. It expires in <strong>24 hours</strong>.</p>
   <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't request this, you can safely ignore this email.</p>
 </div>`
-      });
-    } catch (emailErr) {
-      console.error(`[EMAIL RESEND ERROR] ${emailErr.message}`);
-      res.status(500);
-      throw new Error('Could not send verification email. Please check your inbox or try again shortly.');
-    }
+    }).catch(err => console.error(`[EMAIL RESEND ERROR] ${err.message}`));
 
     res.status(200).json({
       success: true,
-      message: 'Verification code sent! Please check your inbox (and spam folder).',
+      message: isSmtpConfigured() ? 'Verification code sent! Check your inbox and spam folder.' : 'New code generated.',
+      // Return code directly when SMTP not configured
+      devCode: !isSmtpConfigured() ? verificationCode : undefined,
     });
   } catch (error) {
     next(error);
