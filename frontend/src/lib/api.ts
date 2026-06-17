@@ -362,7 +362,7 @@ export async function removeMemberOrInvitation(id: string): Promise<{ success: b
   });
 }
 
-// --- PASSWORDS & VERIFICATION ---
+// --- PASSWORDS ---
 export async function forgotPassword(email: string): Promise<{ success: boolean; message: string; resetCode?: string }> {
   const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
     method: 'POST',
@@ -387,17 +387,4 @@ export async function resetPassword(payload: any): Promise<{ success: boolean; m
     throw new Error(errData.message || 'Password reset failed');
   }
   return res.json();
-}
-
-export async function verifyEmail(code: string): Promise<{ success: boolean; message: string; user: UserProfile }> {
-  return authenticatedRequest('/auth/verify-email', {
-    method: 'POST',
-    body: JSON.stringify({ code }),
-  });
-}
-
-export async function resendVerification(): Promise<{ success: boolean; message: string; code?: string }> {
-  return authenticatedRequest('/auth/resend-verification', {
-    method: 'POST',
-  });
 }

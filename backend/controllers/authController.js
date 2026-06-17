@@ -1,7 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
-const { sendEmail, isSmtpConfigured } = require('../utils/emailService');
 
 // Helper function to generate JWT
 const generateToken = (userId) => {
@@ -43,42 +42,16 @@ const signup = async (req, res, next) => {
     }
 
     // Create user (pre-save hook hashes password)
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
+    // Email verification is disabled — users are active immediately
     const user = await User.create({
       name,
       email,
       password,
-      verificationCode,
-      verificationExpires,
+      isVerified: true,
     });
-
-    console.log(`[VERIFICATION CODE LOG] Email: ${email} | Code: ${verificationCode}`);
-
-    // Send verification email — fire-and-forget so signup NEVER blocks/hangs
-    // Email failure must not prevent account creation
-    sendEmail({
-      to: email,
-      subject: 'Verify your NexLink email address',
-      text: `Hello ${name},\n\nWelcome to NexLink! Your 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page to activate your account.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
-      html: `
-<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
-  <h2 style="color:#a78bfa;margin-bottom:8px;">Verify your email</h2>
-  <p>Hello <strong>${name}</strong>,</p>
-  <p>Welcome to NexLink! Use the code below to verify your email address:</p>
-  <div style="text-align:center;margin:28px 0;">
-    <span style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#7c3aed;background:#1e1b4b;padding:12px 24px;border-radius:8px;">${verificationCode}</span>
-  </div>
-  <p style="color:#94a3b8;font-size:13px;">Enter this code on the verification page. It expires in <strong>24 hours</strong>.</p>
-  <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't create a NexLink account, you can safely ignore this email.</p>
-</div>`
-    }).catch(err => console.error(`[EMAIL ERROR] ${err.message}`));
 
     res.status(201).json({
       success: true,
-      // When SMTP is not configured, return code so frontend can show it directly
-      devCode: !isSmtpConfigured() ? verificationCode : undefined,
       user: {
         _id: user._id,
         name: user.name,
@@ -360,108 +333,6 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Verify email address
- * @route   POST /api/auth/verify-email
- * @access  Private
- */
-const verifyEmail = async (req, res, next) => {
-  try {
-    const { code } = req.body;
-    if (!code) {
-      res.status(400);
-      throw new Error('Please enter the 6-digit verification code');
-    }
-
-    const user = await User.findOne({
-      _id: req.user._id,
-      verificationCode: code,
-      verificationExpires: { $gt: Date.now() },
-    });
-
-    if (!user) {
-      res.status(400);
-      throw new Error('Invalid or expired verification code');
-    }
-
-    user.isVerified = true;
-    user.verificationCode = undefined;
-    user.verificationExpires = undefined;
-
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully',
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        isVerified: user.isVerified,
-        preferences: user.preferences,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * @desc    Resend verification code
- * @route   POST /api/auth/resend-verification
- * @access  Private
- */
-const resendVerification = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      res.status(404);
-      throw new Error('User not found');
-    }
-
-    if (user.isVerified) {
-      return res.status(200).json({
-        success: true,
-        message: 'Email is already verified',
-      });
-    }
-
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    user.verificationCode = verificationCode;
-    user.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    await user.save();
-    console.log(`[VERIFICATION CODE RESEND LOG] Email: ${user.email} | Code: ${verificationCode}`);
-
-    // Fire-and-forget — never block the response waiting for email
-    sendEmail({
-      to: user.email,
-      subject: 'Your new NexLink verification code',
-      text: `Hello ${user.name},\n\nYour new 6-digit email verification code is:\n\n${verificationCode}\n\nEnter this code on the verification page.\nThis code expires in 24 hours.\n\nThanks,\nThe NexLink Team`,
-      html: `
-<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f0f14;color:#e2e8f0;border-radius:12px;">
-  <h2 style="color:#a78bfa;margin-bottom:8px;">New verification code</h2>
-  <p>Hello <strong>${user.name}</strong>,</p>
-  <p>Here is your new NexLink email verification code:</p>
-  <div style="text-align:center;margin:28px 0;">
-    <span style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#7c3aed;background:#1e1b4b;padding:12px 24px;border-radius:8px;">${verificationCode}</span>
-  </div>
-  <p style="color:#94a3b8;font-size:13px;">Enter this code on the verification page. It expires in <strong>24 hours</strong>.</p>
-  <p style="color:#94a3b8;font-size:12px;margin-top:24px;">If you didn't request this, you can safely ignore this email.</p>
-</div>`
-    }).catch(err => console.error(`[EMAIL RESEND ERROR] ${err.message}`));
-
-    res.status(200).json({
-      success: true,
-      message: isSmtpConfigured() ? 'Verification code sent! Check your inbox and spam folder.' : 'New code generated.',
-      // Return code directly when SMTP not configured
-      devCode: !isSmtpConfigured() ? verificationCode : undefined,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   signup,
   login,
@@ -469,6 +340,4 @@ module.exports = {
   updateSettings,
   forgotPassword,
   resetPassword,
-  verifyEmail,
-  resendVerification,
 };

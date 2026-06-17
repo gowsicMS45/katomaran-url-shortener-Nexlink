@@ -6,8 +6,6 @@ const {
   updateSettings,
   forgotPassword,
   resetPassword,
-  verifyEmail,
-  resendVerification
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
@@ -21,7 +19,5 @@ router.put('/settings', protect, updateSettings);
 
 router.post('/forgot-password', rateLimiter, forgotPassword);
 router.post('/reset-password', resetPassword);
-router.post('/verify-email', protect, verifyEmail);
-router.post('/resend-verification', protect, resendVerification);
 
 module.exports = router;
