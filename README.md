@@ -219,6 +219,6 @@ npm run dev            # starts on http://localhost:5173
    https://drive.google.com/file/d/19TKngF2EoZhTSSs583diyCoGwqqHamcH/view?usp=sharing
    ----
 DEPLOYED LINK 
-https://nexlink-frontend.vercel.app/
+https://nexlink-frontend.vercel.app
 
 This project is a part of a hackathon run by https://katomaran.com
