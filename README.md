@@ -1,224 +1,208 @@
-# NexLink 🚀
+# NexLink 🔗 - Full-Stack URL Shortener & Analytics Platform
 
-> NexLink is a full-stack URL shortening and analytics platform built with React, TypeScript, Express, and MongoDB. Users can create short links, track click analytics, generate QR codes, import/export CSV data, and manage links through a responsive dashboard.
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)](https://katomaran-url-shortener-nexlink.vercel.app)
+[![Node.js](https://img.shields.io/badge/Node.js-v18+-green?logo=node.js)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-green?logo=mongodb)](https://www.mongodb.com/)
 
----
-
-## 📖 Project Overview
-
-NexLink is a full-stack URL shortening and analytics platform built with React, TypeScript, Express, and MongoDB. Users can create short links, track click analytics, generate QR codes, import/export CSV data, and manage links through a responsive dashboard. The backend is a JWT-authenticated REST API; the frontend is a file-routed React SPA. Every redirect is handled server-side with sequential security checks (expiry → click limit → password gate) before issuing a `302` and recording a visit.
-
----
-
-## 🎯 Demo Highlights
-
-- Create and manage shortened URLs
-- Track click analytics in real-time
-- Generate and download QR codes
-- Import and export URLs using CSV
-- Secure links with passwords, expiry dates, and click limits
-- View browser, device, and traffic analytics
+> NexLink is a full-stack URL shortening and analytics platform built with React, TypeScript, Express, and MongoDB. Users can create custom short links, track real-time click analytics, generate customizable QR codes, import/export CSV data, and manage links through a responsive, modern dashboard.
 
 ---
 
-## 📋 AI Planning Document
+## 🌐 Live Demo & Links
 
-### Requirement Analysis
-Core requirements were identified: URL shortening with analytics, QR code generation, CSV import/export, and JWT-based authentication with email verification and password reset.
+- **Live Application:** [https://katomaran-url-shortener-nexlink.vercel.app](https://katomaran-url-shortener-nexlink.vercel.app)
+- **Demo Video:** [Google Drive Demo](https://drive.google.com/file/d/19TKngF2EoZhTSSs583diyCoGwqqHamcH/view?usp=sharing)
+- **Hackathon Host:** Developed as part of a hackathon run by [Katomaran](https://katomaran.com)
 
-### Architecture Planning
-A decoupled client-server architecture was chosen. The React SPA communicates with the Express API over JWT-authenticated HTTP. TanStack Router handles file-based, JWT-guarded routing; TanStack Query manages all API state.
+---
 
-### Database Design
-Three MongoDB collections were designed: `users` for authentication and preferences, `urls` for link metadata, and `visits` for per-redirect analytics records.
+## 📌 Project Overview
 
-### Development Workflow
-Backend controllers were built first (auth → URLs → analytics), then frontend pages were wired up. Email flows were added last with a console fallback so the app works without SMTP configured.
+NexLink provides an end-to-end URL management platform with enterprise-level features. The backend is a JWT-authenticated REST API with role/user isolation; the frontend is a file-routed React SPA. Every redirect is handled server-side with sequential security checks (expiry verification → click limit checks → password protection gate) before issuing a `302` redirect and recording detailed visit metrics.
+
+### Key Highlights
+- **Smart Redirects:** Fast server-side redirects with security enforcement.
+- **Real-Time Analytics:** Visual tracking for traffic volume, device breakdown, browser share, and geographic distribution.
+- **Dynamic QR Codes:** Instant PNG and SVG QR code generation with download and share capabilities.
+- **Bulk Operations:** CSV import for batch link generation and CSV export for analytics.
+- **Security & Access Control:** Password-protected links, expiration timestamps, and click throttling.
 
 ---
 
 ## ✨ Features
 
-### Core Features
-- User Authentication (signup, login, JWT session)
-- URL Shortening with Custom Alias
-- Password Protected Links
-- Expiry Dates & Click Limits
-- Analytics Dashboard (traffic, devices, browsers, geography, heatmap)
-- QR Code Generation (PNG & SVG download, print, share)
-- CSV Import & Export (bulk link import, link list export, per-link analytics export)
-- Search & Filters (by tag, shortcode, destination; filter active / expired / favorites / archived)
-- Email Verification & Password Reset (6-digit codes via SMTP or console fallback)
-- Favorites / Bookmarks & Archive
+### Core Capabilities
+- **User Authentication:** JWT session management, secure signup/login with bcrypt hashing, and password recovery.
+- **URL Shortening & Custom Aliases:** Generate compact 6-character alphanumeric aliases (`nanoid`) or define customized slugs.
+- **Link Protection:** Set password gates, custom expiration dates, and maximum allowed clicks.
+- **Interactive Analytics Dashboard:** Real-time metrics with Recharts (Area, Bar, and Pie charts), device breakdown, browser breakdown, and UTM parameter capture.
+- **QR Code Studio:** High-resolution QR code rendering with canvas/SVG export options.
+- **Data Management:** Bulk CSV import, link inventory export, and detailed per-link analytics export.
+- **Search & Filters:** Search by tag, shortcode, or destination with status filtering (Active, Expired, Favorites, Archived).
+- **Email Verification & Password Reset:** 6-digit verification codes via Nodemailer SMTP with console fallback for local testing.
 
 ### Bonus Features
-- UTM Parameter Capture on every redirect
-- Global Search Palette (⌘K)
-- Auto-Refresh Dashboard (10 s interval)
-- Marketing Landing Page with pricing, FAQ, and feature sections
-- Rate-limited forgot-password endpoint (5 requests / IP / hour)
+- **UTM Parameter Tracking:** Captures `utm_source`, `utm_medium`, `utm_campaign` on every redirect.
+- **Global Search Palette (`Cmd+K` / `Ctrl+K`):** Quick command bar for rapid navigation and link lookups.
+- **Live Auto-Refresh:** Optional 10-second polling interval for dashboard live updates.
+- **Rate-Limited Endpoints:** In-memory request throttling for sensitive routes (e.g. forgot password).
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, TypeScript, Vite, TanStack Router, TanStack Query |
-| UI | shadcn/ui (Radix primitives), Tailwind CSS, Framer Motion |
-| Charts | Recharts (AreaChart, BarChart, PieChart) |
-| QR | `qrcode` npm package (canvas + SVG) |
-| Backend | Node.js, Express 4 |
-| Database | MongoDB, Mongoose |
-| Auth | JWT (`jsonwebtoken`), bcrypt (`bcryptjs`) |
-| Email | Nodemailer (SMTP or console fallback) |
-| Short codes | `nanoid` — 6-character alphanumeric |
-| Validation | `validator` npm package |
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend Framework** | React 18, TypeScript, Vite | Modern, high-performance SPA client |
+| **Routing & State** | TanStack Router, TanStack Query | Type-safe file routing and server-state caching |
+| **UI Components** | Radix UI, Tailwind CSS, Framer Motion | Accessible UI primitives and fluid animations |
+| **Data Visualization** | Recharts | Charts for traffic, devices, and browser metrics |
+| **QR Engine** | `qrcode` | Vector (SVG) and raster (PNG) QR rendering |
+| **Backend Framework** | Node.js, Express.js 4 | RESTful API server and redirect controller |
+| **Database & ORM** | MongoDB, Mongoose ODM | Flexible document storage and schemas |
+| **Authentication** | JWT (`jsonwebtoken`), bcryptjs | Stateless auth tokens and password hashing |
+| **Email Service** | Nodemailer | SMTP dispatch with dev console fallback |
+| **Utilities** | `nanoid`, `validator` | Unique slug generation and input validation |
 
 ---
 
-## 📐 Architecture Diagram
+## 📐 Architecture
 
+```text
+┌────────────────────────────────────────────────────────┐
+│             React SPA (Vite / Port 5173)               │
+│   TanStack Router  •  TanStack Query  •  shadcn/ui     │
+│   Recharts         •  qrcode          •  Tailwind CSS  │
+└───────────────────────────┬────────────────────────────┘
+                            │ HTTP REST (Bearer JWT)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│             Express Server (Port 5000)                 │
+│   CORS  •  JSON Parser  •  Auth Middleware             │
+│   /api/auth  •  /api/urls  •  /api/analytics           │
+│   /r/:shortCode (302 Redirect + Analytics Tracker)     │
+└───────────────────────────┬────────────────────────────┘
+                            │ Mongoose ODM
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                     MongoDB                            │
+│           users  •  urls  •  visits                    │
+└────────────────────────────────────────────────────────┘
 ```
-┌────────────────────────────────────┐
-│    React SPA  (Vite / port 5173)   │
-│  TanStack Router · TanStack Query  │
-│  shadcn/ui · Recharts · qrcode     │
-└─────────────────┬──────────────────┘
-                  │  HTTP REST  (Bearer JWT)
-                  ▼
-┌────────────────────────────────────┐
-│   Express Server  (port 5000)      │
-│  cors → json → protect → routes   │
-│  /api/auth  /api/urls  /api/analytics │
-│  /r/:shortCode  (redirect)        │
-└─────────────────┬──────────────────┘
-                  │  Mongoose ODM
-                  ▼
-┌────────────────────────────────────┐
-│   MongoDB  (users · urls · visits) │
-└────────────────────────────────────┘
+
+---
+
+## 🗄️ Database Models
+
+- **User:** Stores authentication credentials, email verification status, password reset tokens, and workspace preferences.
+- **URL:** Stores the destination URL, short code, custom alias, expiry timestamp, click limit, optional password hash, tags, and favorite/archive flags.
+- **Visit:** Records per-redirect telemetry including timestamp, IP address, browser, operating system, approximate location, referrer, and UTM parameters.
+
+---
+
+## 📂 Project Structure
+
+```text
+katomaran-url-shortener-Nexlink/
+├── backend/
+│   ├── config/          # MongoDB connection and setup
+│   ├── controllers/     # Auth, URL, and Analytics controllers
+│   ├── middleware/      # JWT auth guard and error handling
+│   ├── models/          # User, URL, and Visit Mongoose schemas
+│   ├── routes/          # Express route definitions
+│   ├── utils/           # Helper functions (code generation, email, etc.)
+│   └── server.js        # Backend server entry point
+├── frontend/
+│   ├── src/
+│   │   ├── components/  # UI components, modals, and charts
+│   │   ├── hooks/       # Custom hooks (auth, query hooks)
+│   │   ├── lib/         # API client and helper functions
+│   │   └── routes/      # TanStack file-based routes
+│   ├── index.html       # Vite entry HTML
+│   └── vite.config.ts   # Vite configuration
+└── README.md
 ```
 
 ---
 
-## 🗄️ Database Overview
-
-**User** — Stores authentication credentials, email verification state, password reset tokens, and workspace preferences.
-
-**URL** — Stores the original destination, generated short code or custom alias, expiry date, click limit, optional password hash, tags, and favorite/archive flags.
-
-**Visit** — Stores a per-redirect record of IP address, browser, device, country, referrer, and UTM parameters for analytics.
-
----
-
-## 📡 API Overview
-
-### Authentication
-- Signup
-- Login
-- Email Verification
-- Password Reset
-
-### URL Management
-- Create URL
-- Edit URL
-- Delete URL
-- Search URL
-- Export CSV
-
-### Analytics
-- Dashboard Analytics
-- Link Analytics
-- Analytics Export
-
----
-
-## 🤖 AI Tools Used
-
-AI assistance was used during planning, architecture design, component generation, debugging, and documentation. All generated code was reviewed, tested, and modified before integration into the final application.
-
----
-
-## ⚙️ Setup Instructions
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- MongoDB running locally on `127.0.0.1:27017` (or a remote Atlas URI)
+- **Node.js:** v18.0.0 or higher
+- **MongoDB:** Local instance on `mongodb://127.0.0.1:27017` or a remote MongoDB Atlas URI
 
-### Clone the Repository
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/gowsicMS45/katomaran-url-shortener-Nexlink.git
 cd katomaran-url-shortener-Nexlink
 ```
 
-### Backend
+### 2. Backend Setup
 ```bash
 cd backend
 npm install
-cp .env.example .env   # fill in values
-npm run dev            # starts on http://localhost:5000
+cp .env.example .env   # Configure environment variables
+npm run dev            # Starts backend on http://localhost:5000
 ```
 
-### Frontend
+> **Note on Email in Development:** If SMTP credentials are not configured, verification and password reset codes are printed to the backend console (search for `[VERIFICATION CODE LOG]` and `[PASSWORD RESET LOG]`).
+
+### 3. Frontend Setup
 ```bash
-cd frontend
+cd ../frontend
 npm install
-npm run dev            # starts on http://localhost:5173
+npm run dev            # Starts frontend on http://localhost:5173
 ```
-
-> **Email codes in development**: Without SMTP configured, verification and reset codes are printed to the backend console — search for `[VERIFICATION CODE LOG]` and `[PASSWORD RESET LOG]`.
 
 ---
 
-## 🚀 Deployment
+## 🔐 Environment Variables
 
-### Backend — Railway
-1. Connect the GitHub repo → set **Root Directory** to `backend`.
-2. Add all `backend/.env` variables; set `NODE_ENV=production` and point `MONGODB_URI` to Atlas.
-3. Deploy — Railway exposes a public HTTPS URL.
+Refer to `backend/.env.example` for all configurable environment variables. Do not commit actual `.env` files.
 
-### Frontend — Vercel
-1. Import the repo → set **Framework** to `Vite`, **Root Directory** to `frontend`.
-2. Update `API_BASE_URL` in `frontend/src/lib/api.ts` to the Railway backend URL.
-3. Add a `vercel.json` for SPA routing:
+Key environment variables:
+- `PORT`: Server port (default: `5000`)
+- `MONGODB_URI`: MongoDB connection string
+- `JWT_SECRET`: Secret key for signing JWT tokens
+- `FRONTEND_URL`: URL of the frontend application (for CORS)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: Optional email server configuration
+
+---
+
+## ☁️ Deployment Guide
+
+### Backend (Railway / Render)
+1. Link your repository and set the **Root Directory** to `backend`.
+2. Configure all environment variables from `backend/.env.example` (set `NODE_ENV=production` and `MONGODB_URI` to MongoDB Atlas).
+3. Deploy the service to get a public HTTPS endpoint.
+
+### Frontend (Vercel)
+1. Import the repository and set the **Root Directory** to `frontend` with the **Vite** preset.
+2. Set the `API_BASE_URL` in `frontend/src/lib/api.ts` (or environment variable) to the deployed backend URL.
+3. Configure `vercel.json` for SPA rewrites:
    ```json
-   { "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+   {
+     "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+   }
    ```
 4. Deploy.
 
 ---
 
-## 📝 Assumptions Made
+## 🤖 AI Planning & Engineering Workflow
 
-1. **API URL is hardcoded** — `http://localhost:5000/api` in `frontend/src/lib/api.ts` must be updated before production deployment.
-2. **Country data is approximate** — country is derived from the IP's last octet modulo 6, not a real GeoIP database.
-3. **Email is optional** — if SMTP vars are absent, codes are printed to the server console; all features still work.
-4. **Rate limiter is in-memory** — resets on server restart; not suitable for multi-instance deployments without Redis.
-5. **No credential required for local MongoDB** — update the URI for any auth-protected or Atlas instance.
-
----
-
-## ⚠️ Known Limitations
-
-1. No pagination for large datasets.
-2. Country analytics currently use approximate location mapping.
-3. Email verification is not enforced before login.
+AI assistance was utilized during:
+- Initial architectural design and modular decoupling.
+- Component scaffolding and TypeScript interface modeling.
+- Error-handling logic and test scenario validation.
+All generated code was thoroughly reviewed, refined, and tested for production readiness.
 
 ---
 
-## 🔮 Future Improvements
+## 👤 Author
 
-1. Replace hardcoded API URL with a Vite environment variable (`VITE_API_URL`).
-2. Add server-side pagination to the link list endpoint.
-3. Integrate a real GeoIP database (e.g. `geoip-lite` or MaxMind).
-4. Replace the in-memory rate limiter with a Redis-backed store for horizontal scaling.
-5. Enforce email verification before allowing link creation.
-   ------
-   DEMO VIDEO LINK
-   https://drive.google.com/file/d/19TKngF2EoZhTSSs583diyCoGwqqHamcH/view?usp=sharing
-   ----
-DEPLOYED LINK 
-https://nexlink-frontend.vercel.app
-
-This project is a part of a hackathon run by https://katomaran.com
+**Gowsic M S**  
+- GitHub: [@gowsicMS45](https://github.com/gowsicMS45)
+- Portfolio: [https://gowsic-s-digital-canvas-main.vercel.app](https://gowsic-s-digital-canvas-main.vercel.app)
